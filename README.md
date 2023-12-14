@@ -83,11 +83,11 @@ Moreover, we provide three different training configurations:
    
 
 ### Prefomance
-Baselines and our model EJudge their performances are as follows.
+The performance of Baselines and our model EJudge are as follows.
 ![Alt text](./pic/fig-6.png)
 
 ### Evaluation on CAIL2018
-We further evalute our model EJudge on commonly used dataset [CAIL2018](https://arxiv.org/abs/1807.02478).
+We further evalute our model EJudge on the commonly used dataset [CAIL2018](https://arxiv.org/abs/1807.02478).
 ![Alt text](./pic/fig-7.png)
 
 
