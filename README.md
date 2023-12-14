@@ -17,7 +17,7 @@ Our dataset MELEE comprises 2865 legal cases with an average of 2.5 defendants p
 
 
 ### Annotation Example
-we ask three legal experts to annotate four types of criminal element for each defendant. Here is an annotation example.
+We ask three legal experts to annotate four types of criminal element for each defendant. Here is an annotation example.
 ![tab2](./pic/fig-4.png)
 
 ### Annotation Scale
@@ -64,7 +64,7 @@ As far as we know, our dataset MELEE provides the largest fine-grained annotatio
 ## Experiments
 
 ### Our Method
-we propose a crime-element-informed charge prediction model named EJudge which consists of four components: the Element Selector, the Category Selector, the Rule Selector, and the Verifier.
+We propose a crime-element-informed charge prediction model named EJudge which consists of four components: the Element Selector, the Category Selector, the Rule Selector, and the Verifier.
 ![tab2](./pic/fig-5.png)
 
 ### Baselines
@@ -82,11 +82,11 @@ Moreover, we provide three different training configurations:
    
 
 ### Prefomance
- Baselines and our model EJudge their performances are as follows.
+Baselines and our model EJudge their performances are as follows.
 ![Alt text](./pic/fig-6.png)
 
 ### Evaluation on CAIL2018
-we further evalute our model EJudge on commonly used dataset [CAIL2018](https://arxiv.org/abs/1807.02478).
+We further evalute our model EJudge on commonly used dataset [CAIL2018](https://arxiv.org/abs/1807.02478).
 ![Alt text](./pic/fig-7.png)
 
 
