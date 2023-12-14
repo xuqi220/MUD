@@ -30,14 +30,15 @@ As far as we know, our dataset MELEE provides the largest fine-grained annotatio
 {
     "uid": "annotator-1", 
     "id": "2759711", 
-    "facts": "经审理查明，被害人...", "labels": [
+    "facts": "经审理查明，被害人...", 
+    "labels": [
         {
             "subject": "杨华", 
             "charge": "抢劫罪", 
             "sub+ob": [
                 {
                     "object": "公民财产权利", 
-                    "subjective": "无", 
+                    "subjective": "为获取钱财...", 
                     "objective": {
                         "act": "...采用殴打、辱骂、持刀威..，", 
                         "res": "...人民币55999元"}
@@ -50,7 +51,7 @@ As far as we know, our dataset MELEE provides the largest fine-grained annotatio
             "sub+ob": [
                 {
                     "object": "公民的人身、民主权利", 
-                    "subjective": "无", 
+                    "subjective": "为泄愤...", 
                     "objective": {
                         "act": "...人身控制", 
                         "res": "无"}
