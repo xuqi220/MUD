@@ -25,6 +25,41 @@ we ask three legal experts to annotate four types of criminal element for each d
 As far as we know, our dataset MELEE provides the largest fine-grained annotation scale for the charge prediction task.Here is a comparison between the MELEE and other datasets with fine-grained annotation. 
 ![tab2](./pic/fig-3.png)
 
+### Data Formmat
+```
+{
+    "uid": "annotator-1", 
+    "id": "2759711", 
+    "facts": "经审理查明，被害人...", "labels": [
+        {
+            "subject": "杨华", 
+            "charge": "抢劫罪", 
+            "sub+ob": [
+                {
+                    "object": "公民财产权利", 
+                    "subjective": "无", 
+                    "objective": {
+                        "act": "...采用殴打、辱骂、持刀威..，", 
+                        "res": "...人民币55999元"}
+                }
+            ]
+        },
+        {
+            "subject": "左贵云", 
+            "charge": "非法拘禁罪", 
+            "sub+ob": [
+                {
+                    "object": "公民的人身、民主权利", 
+                    "subjective": "无", 
+                    "objective": {
+                        "act": "...人身控制", 
+                        "res": "无"}
+                }
+            ]
+        }
+    ]
+}
+```
 
 ## Experiments
 
