@@ -83,7 +83,7 @@ Moreover, we provide three different training configurations:
    
 
 ### Prefomance
-The performance of Baselines and our model EJudge are as follows.
+The performance of baselines and our model EJudge are as follows.
 ![Alt text](./pic/fig-6.png)
 
 ### Evaluation on CAIL2018
