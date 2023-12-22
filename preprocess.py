@@ -1,7 +1,5 @@
-import re, os
+import re
 import json
-import random
-from dataset import Lang
 
 class Processor():
     def __init__(self, lang):
@@ -9,8 +7,9 @@ class Processor():
         self.sp_pattern_1 = re.compile(r"///")
         self.sp_pattern_2 = re.compile(r",|，|。|；|;|：|:|///")
         self.sp_pattern_3 = re.compile(r"[。，]另查")
-        mask_list = [s[:-1] for s in self.lang.index2charge]
-        mask_list.extend(["被告人", "被害人"])
+        # mask_list = [s[:-1] for s in self.lang.index2charge]
+        # mask_list.extend(["被告人", "被害人"])
+        mask_list = ["被告人", "被害人"]
         s = "|".join(mask_list)
         self.mask_pt = re.compile(s)
 
@@ -27,7 +26,6 @@ class Processor():
                         item["objective"]["act"] = self.__get_sent_id(sample["facts"], item["objective"]["act"])
                         item["objective"]["res"] = self.__get_sent_id(sample["facts"], item["objective"]["res"])
                         item["subjective"] = self.__get_sent_id(sample["facts"], item["subjective"])
-
                 data.append(sample)
         return data
 

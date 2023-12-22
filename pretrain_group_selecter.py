@@ -4,10 +4,11 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import util
 import copy
 from preprocess import Processor
-from model import Reasoner
+from model import Reasoner, GroupPred
 import setting
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import transformers
 from dataset import ClozeDataset, Lang
@@ -16,8 +17,7 @@ from transformers import get_cosine_with_hard_restarts_schedule_with_warmup
 transformers.logging.set_verbosity_error()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-def train(seed, enc_name, enc_path, data_path, params, index2charge, charge_desc, cate2charge):
+def train(seed, enc_path, data_path, params, index2charge, charge_desc, cate2charge):
     util.set_seed(seed)
     print("preparing dataset...")
     train_path, dev_path, test_path = f"./datasets/{data_path}/train.json",f"./datasets/{data_path}/dev.json",f"./datasets/{data_path}/test.json"
@@ -30,13 +30,14 @@ def train(seed, enc_name, enc_path, data_path, params, index2charge, charge_desc
     train_data_loader = DataLoader(dataset_train, batch_size=params['batch_size'], collate_fn=dataset_train.collate_fn, shuffle=True)
     dev_data_loader = DataLoader(dataset_dev, batch_size=params['batch_size'], collate_fn=dataset_dev.collate_fn, shuffle=False)
     test_data_loader = DataLoader(dataset_test, batch_size=params['batch_size'], collate_fn=dataset_test.collate_fn, shuffle=False)
-    # model = Reasoner(enc_path, lang, device)
+    model = GroupPred(enc_path, lang, device)
+    model.to(device)
+    # model = torch.load(f"./pretrained_files/80_{data_path}.pkl")
+    # model.eval()
     # model.to(device)
-    model = torch.load("./outputs/models/80_roberta_wwm__all_19.pkl")
-    model.eval()
-    util.eval_group_prediction(model, dev_data_loader)
-    util.eval_group_prediction(model, test_data_loader)
-    return
+    # util.eval_group_prediction(model, dev_data_loader)
+    # util.eval_group_prediction(model, test_data_loader)
+    # return
     # 定义损失函数，优化器，学习率调整器
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(params=model.parameters(), lr=params['lr'])
@@ -48,7 +49,7 @@ def train(seed, enc_name, enc_path, data_path, params, index2charge, charge_desc
                                                                    num_cycles=1)
     print("training model...")
     from tqdm import tqdm
-    model_id = f"{seed}_{enc_name}__{data_path}" # enc_name_model_name_data_name
+    model_id = f"{seed}_{data_path}" # enc_name_model_name_data_name
     dev_report_file = open(f"./outputs/reports/{model_id}_dev.txt", "w", encoding="utf-8")  # 记录模型分类报告
     test_report_file = open(f"./outputs/reports/{model_id}_test.txt", "w", encoding="utf-8")  # 记录模型分类报告
     for epoch in range(params['epoch']):
@@ -58,8 +59,8 @@ def train(seed, enc_name, enc_path, data_path, params, index2charge, charge_desc
         for ids, inputs, enc_inputs, dfds, grouped_dfds, charge_idxs, grouped_charge_idxs, cate_idxs, grouped_cate_idxs, sp_lens, pad_sp_lens, relevant_sents, mask_positions, dfd_positions in tqdm(train_data_loader):
             # 梯度置零
             optimizer.zero_grad()
-            pred_scores = model(enc_inputs, mask_positions)
-            loss = criterion(pred_scores, torch.tensor(cate_idxs).to(device))
+            group_scores = model(enc_inputs, mask_positions, pad_sp_lens, relevant_sents, dfd_positions)
+            loss = criterion(group_scores, torch.tensor(cate_idxs).to(device))
             train_loss += loss.item()
             # 累计梯度
             loss.backward()
@@ -72,27 +73,29 @@ def train(seed, enc_name, enc_path, data_path, params, index2charge, charge_desc
         print(f"train_loss:{round(train_loss/len(train_data_loader.dataset), 4)}")
         if epoch>4:
             torch.save(model, f"./outputs/models/{model_id}_{epoch}.pkl")
+        print("Dev:")
         util.eval_group_prediction(model, dev_data_loader)
+        print("Test:")
         util.eval_group_prediction(model, test_data_loader)
+
 def main():
     params = setting.params
-    encs = setting.encs
+    enc = setting.enc
     index2charge = setting.index2charge
     charge_desc = setting.charge_desc
     cate2charge = setting.cate2charge
     print("Running ...")
     for seed in params["seeds"][:1]:
-        for enc_name, enc_path in encs.items():
-            for data_path in params["data_path"]:
-                print(f"seed: {seed}\n"
-                      f"enc_name: {enc_name}\n"
-                      f"data: {data_path}\n"
-                      f"batch_size: {params['batch_size']}\n"
-                      f"lr: {params['lr']}\n")
-                if data_path == "hard":
-                    train(seed, enc_name, enc_path, data_path, params, index2charge[:-1], charge_desc, copy.deepcopy(cate2charge))
-                else:
-                    train(seed, enc_name, enc_path, data_path, params, index2charge, charge_desc, copy.deepcopy(cate2charge))
+        print(f"set seed {seed}")
+        for data_path in params["data_path"]:
+            print(f"seed: {seed}\n"
+                  f"data: {data_path}\n"
+                  f"batch_size: {params['batch_size']}\n"
+                  f"lr: {params['lr']}\n")
+            if data_path == "hard":
+                train(seed, enc, data_path, params, index2charge[:-1], charge_desc, copy.deepcopy(cate2charge))
+            else:
+                train(seed, enc, data_path, params, index2charge, charge_desc, copy.deepcopy(cate2charge))
 
 if __name__=="__main__":
     main()

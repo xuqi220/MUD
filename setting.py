@@ -32,26 +32,40 @@ cate2charge = {
                "社会道德风尚和社会治安管理秩序":["组织卖淫罪", "协助组织卖淫罪", "容留卖淫罪", "介绍卖淫罪"]
                }
 
+simG = {
+'财产权利': ['国家司法秩序', '公民的人身、民主权利'],
+ '国家司法秩序': ['财产权利', '公民的人身、民主权利', '社会公共安全'],
+ '公民的人身、民主权利': ['国家司法秩序', '财产权利', '社会公共秩序'],
+ '社会公共秩序': ['公民的人身、民主权利'],
+ '市场秩序': ['社会道德风尚和社会治安管理秩序', '国家对知识产权的管理秩序'],
+ '社会道德风尚和社会治安管理秩序': ['市场秩序'],
+ '国家对知识产权的管理秩序': ['市场秩序'],
+ '社会公共安全': ['国家司法秩序']
+ }
+
+index2charge = ["非法制造枪支罪", "非法买卖枪支罪", "非法持有枪支罪",
+                "假冒注册商标罪", "销售假冒注册商标的商品罪",
+                "合同诈骗罪", "非法经营罪",
+                "故意杀人罪", "故意伤害罪", "非法拘禁罪",
+                "抢劫罪", "诈骗罪", "敲诈勒索罪",
+                "窝藏、包庇罪", "掩饰、隐瞒犯罪所得罪",
+                "组织卖淫罪", "协助组织卖淫罪", "容留卖淫罪", "介绍卖淫罪",
+                "聚众斗殴罪", "寻衅滋事罪", "招摇撞骗罪"]
 
 
-
-encs = {"roberta_wwm":"./pretrained_files/roberta_wwm"}
-        # "roberta_wwm":"./pretrained_files/roberta_wwm"
-        # "lawbert":"./pretrained_files/lawbert"}
-        # "roberta":"./pretrained_files/roberta",
-        # "albert":"./pretrained_files/albert",
-        # "lawformer":"thunlp/Lawformer",
-        # "sbert": "./pretrained_files/sbert"}
+enc = "./pretrained_files/roberta_wwm"
 
 params = {"epoch":20,
-          "batch_size":4,
+          "batch_size":12,
           "lr":0.00005,
-          "model_name":["MyModel"],# ,"Base","BaseWP","BaseWE", "BaseWEE"
-          "data_path":["hard", "easy", "all"],
-          "pattern":["all"],# "act", "res", "sub"
+          "pattern":"ext",# anno:直接使用标注结果；ext:使用模型抽取结果
+          "data_path":["hard","easy", "all"], # , "all""hard",
+          "topk":[2,3],
+          "alpha":[0.001,0.005, 0.01, 0.02, 0.05, 0.08, 0.1, 0.2, 0.5, 1], # 控制charge prediction的分布 dist/alpha
+          "beta":[0.001,0.005, 0.01, 0.05, 0.1, 0.5, 1, 10, 100], # 控制group prediction 的分布dist*beta
+          "threhold":0.0,
           "seeds":[80,19, 23, 94, 13, 0, 7, 47, 21, 81]
           }
-# model_id：enc+components+data_path
 
 if __name__=="__main__":
     pass

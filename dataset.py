@@ -1,28 +1,35 @@
-import re
+import re,time
 import json
 import copy
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 
+
 class Lang:
-    def __init__(self, data_path, charge_desc, cate2charge):
+    def __init__(self, index2charge, charge_desc, cate2charge):
+        self.index2charge = index2charge
+        self.charge2index = {charge: idx for idx, charge in enumerate(self.index2charge)}
+
+        # self.charge2desc = charge_desc
         self.cate2charge = cate2charge
         self.charge2cate = {}
+        keys = []
+        vals = []
+        for cate, charges in self.cate2charge.items():
+            for c in charges:
+                if c not in self.index2charge:
+                    keys.append(cate)
+                    vals.append(c)
+        for k,v in zip(keys, vals):
+            # self.charge2desc.pop(v)
+            self.cate2charge[k].remove(v)
         for cate, charges in self.cate2charge.items():
             for c in charges:
                 self.charge2cate[c] = cate
+
+        self.chaIdx2desc = [charge_desc[charge] for charge in self.index2charge]
         self.index2cate = list(self.cate2charge.keys())
         self.cate2index = {cate: idx for idx, cate in enumerate(self.index2cate)}
-
-        self.index2charge = []
-        self.charge2index = None
-        self.stat(data_path)
-
-        # # 去除数据集中不存在得charge
-        # diff_charge = list(set(charge_desc.keys()).difference(set(self.index2charge)))
-        # for d in diff_charge:
-        #     charge_desc.pop(d)
-        self.charge2desc = charge_desc
 
     def stat(self, data_path):
         # 统计标签
@@ -33,17 +40,16 @@ class Lang:
                 for c in charges:
                     if c not in self.index2charge:
                         self.index2charge.append(c)
-        self.charge2index = {charge: idx for idx, charge in enumerate(self.index2charge)}
+
 
 class ClozeDataset(Dataset):
-    def __init__(self, data, model_path, lang, charge_desc):
+    def __init__(self, data, model_path, lang):
         self.lang = lang
         self.data = data
-        self.charge_desc = charge_desc
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.pt = re.compile(r"\[MASK\]")
         self.sp_token = ","
-        self.sp_pt = re.compile(r",|\[SEP\]")
+        self.sp_token_id = self.tokenizer.get_vocab()[self.sp_token]
+        # self.sp_pt = re.compile(r",|\[SEP\]")
 
     def __len__(self):
         return len(self.data)
@@ -59,55 +65,59 @@ class ClozeDataset(Dataset):
         grouped_dfds = []  # 每个case涉及的被告人
         charge_idxs = []  # 指控索引
         grouped_charge_idxs = []  # 每个case涉及的指控索引
+        cate_idxs = []
         grouped_cate_idxs = []
-        pad_sp_lens = [] # 分割
-        relevant_sents = []# 相关句子[{"subjective":[], "act":[], "res":[]}]
+        sp_lens = []# 分割长度
+        relevant_sents = []# 相关句子
         mask_positions = [] # 掩码位置
         dfd_positions = []
         for sample in batch: # 为每个被告人构造一个sample
             # 被告人
-            grouped_dfds.append([l["subject"] for l in sample["labels"]])
-            grouped_charge_idxs.append([self.lang.charge2index[l["charge"]] for l in sample["labels"]])
+            charge_names = [label["charge"] for label in sample["labels"]]
+            grouped_dfds.append([label["subject"] for label in sample["labels"]])
+            grouped_charge_idxs.append([self.lang.charge2index[c] for c in charge_names])
+            grouped_cate_idxs.append([self.lang.cate2index[self.lang.charge2cate[c]] for c in charge_names])
             for label in sample["labels"]:
                 # id
                 ids.append(sample['id'])
                 # fact
-                ipt = [f"{label['subject']}构成[MASK]罪,"+self.sp_token.join(sample["facts"])]
-                inputs.extend(ipt)
+                f = f"{label['subject']}构成[MASK]罪,"+self.sp_token.join(sample["facts"])
+                inputs.append(f)
                 # mask positions
-                mask_positions.append(1+len(label["subject"])+2)
+                mask_positions.append(len(label["subject"])+2)
                 # 被告人
                 dfds.append(label["subject"])
                 # 指控索引
                 charge_idxs.append(self.lang.charge2index[label["charge"]])
-                # 分割
-                sp = self.tokenizer.decode(self.tokenizer(ipt)["input_ids"][0])
-                sp = [s.split(" ") for s in self.sp_pt.split(sp)][:-1]
-                for idx, s in enumerate(sp):
-                    sp[idx] = [i for i in s if i != ""]
-                sp_len = [len(s)+1 for s in sp]
-                pad_sp_lens.append(sp_len)
+                # 指控类别
+                cate_idxs.append(self.lang.cate2index[self.lang.charge2cate[label["charge"]]])
+                # 分割长度
+                enc_ipt = self.tokenizer(inputs[-1], truncation=True, max_length=512, add_special_tokens=False)["input_ids"]
+                sp_len,pre = [], -1
+                for idx, val in enumerate(enc_ipt):
+                    if val == self.sp_token_id or idx == len(enc_ipt)-1:
+                        sp_len.append(idx-pre)
+                        pre = idx
+                sp_lens.append(sp_len)
                 # 相关句子
-                labeled_sent = {"subjective":[], "act":[], "res":[]}
+                labeled_sent = []
                 for so in label['sub+ob']:
-                    labeled_sent["subjective"].extend([i+1 for i in so["subjective"]])
-                    labeled_sent["act"].extend([i+1 for i in so["objective"]["act"]])
-                    labeled_sent["res"].extend([i+1 for i in so["objective"]["res"]])
+                    labeled_sent.extend([i+1 for i in so["subjective"]])
+                    labeled_sent.extend([i+1 for i in so["objective"]["act"]])
+                    labeled_sent.extend([i+1 for i in so["objective"]["res"]])
+                labeled_sent = list(sorted(set(labeled_sent)))
                 relevant_sents.append(labeled_sent)
                 # dfd positions
                 dfd_positions.append(self.get_dfd_positions(label["subject"], sample["facts"]))
         enc_inputs = self.tokenizer(inputs, truncation=True, max_length=512, return_tensors="pt", padding=True)
-        enc_desc = self.get_charge_desc()
-        sent_lens = copy.deepcopy(pad_sp_lens)
+        # enc_desc = self.get_charge_desc()
+        pad_sp_lens = copy.deepcopy(sp_lens)
         # 根据padding后的长度修改sp_len
-        pad_len = enc_inputs['input_ids'].shape[1]
-        for sp_len in pad_sp_lens:
-            if sum(sp_len)<pad_len:
-                sp_len[-1]+=pad_len-sum(sp_len)
-        cate_idxs = [self.lang.cate2index[self.lang.charge2cate[self.lang.index2charge[c]]] for c in charge_idxs]
-        for idxs in grouped_charge_idxs:
-            grouped_cate_idxs.append([self.lang.cate2index[self.lang.charge2cate[self.lang.index2charge[c]]] for c in idxs])
-        return ids, inputs, enc_inputs, enc_desc, dfds, grouped_dfds, charge_idxs, grouped_charge_idxs, cate_idxs, grouped_cate_idxs, sent_lens, pad_sp_lens, relevant_sents, mask_positions, dfd_positions
+        for l in pad_sp_lens:
+            if sum(l)<enc_inputs['input_ids'].shape[1]:
+                l[-1]+=enc_inputs['input_ids'].shape[1]-sum(l)
+
+        return ids, inputs, enc_inputs, dfds, grouped_dfds, charge_idxs, grouped_charge_idxs, cate_idxs, grouped_cate_idxs, sp_lens, pad_sp_lens, relevant_sents, mask_positions, dfd_positions
 
     def get_dfd_rel(self, grouped_relevant_sents):
         dfds_rel = []
@@ -131,9 +141,10 @@ class ClozeDataset(Dataset):
         for idx, f in enumerate(fact):
             if dfd in f:
                 positions.append(idx+1)
+        if len(positions)==0:
+            print(fact)
         return positions
 
     def get_charge_desc(self):
-        descs = [self.charge_desc[c] for c in self.lang.index2charge]
-        enc_descs = self.tokenizer(descs, truncation=True, max_length=512, return_tensors="pt", padding=True, add_special_tokens=False)
+        enc_descs = self.tokenizer(self.lang.chaIdx2desc, truncation=True, max_length=512, return_tensors="pt", padding=True, add_special_tokens=False)
         return enc_descs
