@@ -1,17 +1,17 @@
-# Crime-Element-Informed Multi-Defendant Charge Prediction: Dataset and Modeling
+# Through the MUD: A Multi-Defendant Charge Prediction Benchmark with Linked Crime Elements
 
 
 ## Overview
-The charge prediction task aims to automatically recommend charges for each defendant given a fact description. We introduce a new dataset (named MELEE) containing multi-defendant legal cases with criminal elements annotations. Furthermore, based on MELEE, we propose a model named EJudge. It predicts charges by using extracted criminal elements while following legal rules, which provide a clear and justifiable rationale.
+The charge prediction task aims to automatically recommend charges for each defendant given a fact description. We introduce a new dataset (named MUD) containing multi-defendant legal cases with criminal elements annotations. Furthermore, based on MUD, we propose a model named EJudge. It predicts charges by using extracted criminal elements while following legal rules, which provide a clear and justifiable rationale.
 
 <img src="./pic/fig-1.png">
 <!-- ![bg](./pic/fig-1.png) -->
 
-## Dataset
-Our dataset MELEE considers multi-defendant legal case and we annotate four types of criminal element for each defendant.
+## Benchmark
+Our Benchmark MUD considers multi-defendant legal case and we annotate four types of criminal element for each defendant.
 
 ### Multiple Defendant
-Our dataset MELEE comprises 2865 legal cases with an average of 2.5 defendants per case. Here is a comparison between the MELEE and other datasets. 
+Our dataset MUD comprises 2865 legal cases with an average of 2.5 defendants per case. Here is a comparison between the MUD and other datasets. 
 
 ![tab1](./pic/fig-2.png)
 
@@ -22,13 +22,13 @@ We ask three legal experts to annotate four types of criminal element for each d
 
 ### Annotation Scale
 
-As far as we know, our dataset MELEE provides the largest fine-grained annotation scale for the charge prediction task.Here is a comparison between the MELEE and other datasets with fine-grained annotation. 
+As far as we know, our dataset MUD provides the largest fine-grained annotation scale for the charge prediction task.Here is a comparison between the MUD and other datasets with fine-grained annotation. 
 ![tab2](./pic/fig-3.png)
 
 ### Data Formmat
 ```
 {
-    "uid": "annotator-1", 
+    "uid": "annotator-3", 
     "id": "2759711", 
     "facts": "经审理查明，被害人...", 
     "labels": [
