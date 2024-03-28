@@ -33,20 +33,20 @@ As far as we know, our dataset MUD provides the largest fine-grained annotation 
     "facts": "经审理查明，被害人...", 
     "labels": [
         {
-            "subject": "杨华", 
+            "subject": "<被告人A>", 
             "charge": "抢劫罪", 
             "sub+ob": [
                 {
                     "object": "公民财产权利", 
                     "subjective": "为获取钱财...", 
                     "objective": {
-                        "act": "...采用殴打、辱骂、持刀威..，", 
+                        "act": "<被告人A>...采用殴打、辱骂、持刀威..，", 
                         "res": "...人民币55999元"}
                 }
             ]
         },
         {
-            "subject": "左贵云", 
+            "subject": "<被告人B>", 
             "charge": "非法拘禁罪", 
             "sub+ob": [
                 {
