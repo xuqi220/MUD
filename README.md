@@ -1,5 +1,6 @@
 # Through the MUD: A Multi-Defendant Charge Prediction Benchmark with Linked Crime Elements
 
+💥 该工作已被ACL2024 Proceedings录用。
 
 ## Overview
 The charge prediction task aims to automatically recommend charges for each defendant given a fact description. We introduce a new dataset (named MUD) containing multi-defendant legal cases with criminal elements annotations. Furthermore, based on MUD, we propose a model named EJudge. It predicts charges by using extracted criminal elements while following legal rules, which provide a clear and justifiable rationale.
